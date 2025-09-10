@@ -1,6 +1,4 @@
-# openGL-engine
-
-OpenGL Engine
+#OpenGL Engine
 
 A lightweight C++ OpenGL engine for rendering 3D models, handling input, and managing shaders and textures. Built with GLFW, GLEW, GLM, STB Image, and Assimp, this engine provides a structured framework for building 3D applications and games.
 
@@ -29,82 +27,45 @@ File Structure(source code)
 
 /source
     |-main.cpp
-    
 /resource
-
     /model
-    
         |-house.obj
-        
     /texture
-    
         |-house_texture.png
-        
     /shader
-    
         |-vert.glsl
-        
         |-frag.glsl
-        
 /dependancies
-
     /assimp
-    
         /...
-        
     /GLFW
-    
         /...
-        
     /GLEW
-    
         /...
-        
     /glm
-    
         /...
-        
     /header
-    
         |-Game.hpp
-        
         |-Mesh.hpp
-        
         |-Utils.hpp
-        
         |-Window.hpp
-        
     /imgui
-    
         /...
-        
     /stb_image
-    
         /...
 
 
 File Structure(executable)
 
 /resource
-
     /model
-    
         |-house.obj
-        
     /texture
-    
         |-house_texture.png
-        
     /shader
-    
         |-vert.glsl
-        
         |-frag.glsl
-        
 |-openGL.exe
-
 |-assimp-vc143-mt.dll
-
 |-glew32.dll
-
 |-glfw.dll

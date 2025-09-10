@@ -28,6 +28,7 @@ A lightweight C++ OpenGL engine for rendering 3D models, handling input, and man
 
 ## File Structure (Source Code)
 
+```text
 /source  
   └── main.cpp  
 /resource  
@@ -56,6 +57,7 @@ A lightweight C++ OpenGL engine for rendering 3D models, handling input, and man
   │   └── ...  
   └── /stb_image  
       └── ...  
+```
 
 ---
 

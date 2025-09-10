@@ -28,47 +28,47 @@ A lightweight C++ OpenGL engine for rendering 3D models, handling input, and man
 
 ## File Structure (Source Code)
 
-source/  
+/source  
 └── main.cpp  
-resource/  
-├── model/  
-│ └── house.obj  
-├── texture/  
+/resource  
+├── /model  
+│ └── /house.obj  
+├── /texture  
 │ └── house_texture.png  
-└── shader/  
+└── /shader  
 ├── vert.glsl  
 └── frag.glsl  
 dependencies/  
-├── assimp/  
+├── /assimp  
 │ └── ...  
-├── GLFW/  
+├── /GLFW  
 │ └── ...  
-├── GLEW/  
+├── /GLEW  
 │ └── ...  
-├── glm/  
+├── /glm  
 │ └── ...  
-├── header/  
+├── /header  
 │ ├── Game.hpp  
 │ ├── Mesh.hpp  
 │ ├── Utils.hpp  
 │ └── Window.hpp  
-├── imgui/  
+├── /imgui  
 │ └── ...  
-└── stb_image/  
+└── /stb_image  
 └── ...  
 
 ---
 
 ## File Structure (Executable)
 
-resource/  
-├── model/  
+/resource  
+├── /model  
 │ └── house.obj  
-├── texture/  
+├── /texture  
 │ └── house_texture.png  
-└── shader/  
-├── vert.glsl  
-└── frag.glsl  
+└── /shader  
+  ├── vert.glsl  
+  └── frag.glsl  
 openGL.exe  
 assimp-vc143-mt.dll  
 glew32.dll  

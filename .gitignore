@@ -1,19 +1,34 @@
-# Visual Studio cache and build files
-.vs/
-*.vc.db
-*.ipch
+# Build outputs
 *.exe
-*.dll
 *.obj
+*.o
 *.pdb
-*.idb
 *.ilk
-*.log
-*.tlog
-*.pch
-*.tmp
-*.cache
-*.db
-*.opendb
-*.user
+*.idb
+
+# Visual Studio
+.vs/
+*.vcxproj.user
 *.suo
+*.user
+*.cache
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.ipch
+
+# Intermediate build files
+Debug/
+Release/
+x64/
+bin/
+build/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -63,6 +63,7 @@ A lightweight C++ OpenGL engine for rendering 3D models, handling input, and man
 
 ## File Structure (Executable)
 
+```text
 /resource  
 ├── /model  
 │   └── house.obj  
@@ -75,3 +76,4 @@ A lightweight C++ OpenGL engine for rendering 3D models, handling input, and man
 ─assimp-vc143-mt.dll  
 ─glew32.dll  
 ─glfw.dll  
+```

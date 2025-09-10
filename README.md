@@ -30,7 +30,7 @@ A lightweight C++ OpenGL engine for rendering 3D models, handling input, and man
 
 ```text
 /source  
-  └── main.cpp  
+  └── example.cpp  
 /resource  
   ├── /model  
   │   └── house.obj  
@@ -72,7 +72,7 @@ A lightweight C++ OpenGL engine for rendering 3D models, handling input, and man
 └── /shader  
     ├── vert.glsl  
     └── frag.glsl  
-─openGL.exe  
+─example.exe  
 ─assimp-vc143-mt.dll  
 ─glew32.dll  
 ─glfw.dll  

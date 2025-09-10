@@ -61,15 +61,15 @@ dependencies/
 
 ## File Structure (Executable)
 
-resource/
-├── model/
-│ └── house.obj
-├── texture/
-│ └── house_texture.png
-└── shader/
-├── vert.glsl
-└── frag.glsl
-openGL.exe
-assimp-vc143-mt.dll
-glew32.dll
-glfw.dll
+resource/  
+├── model/  
+│ └── house.obj  
+├── texture/  
+│ └── house_texture.png  
+└── shader/  
+├── vert.glsl  
+└── frag.glsl  
+openGL.exe  
+assimp-vc143-mt.dll  
+glew32.dll  
+glfw.dll  

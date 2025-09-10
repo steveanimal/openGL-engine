@@ -19,7 +19,8 @@ A lightweight C++ OpenGL engine for rendering 3D models, handling input, and man
 ## Controls
 
 - **W / A / S / D** – Move forward, left, back, right  
-- **Space / Left Shift** – Move up / down  
+- **Space / Left Shift** – Move up / down
+- **Left Control** - Speed up
 - **Mouse** – Look around  
 - **ESC** – Release mouse cursor  
 - **HOME** – Close window  

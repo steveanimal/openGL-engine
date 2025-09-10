@@ -1,0 +1,19 @@
+# Visual Studio cache and build files
+.vs/
+*.vc.db
+*.ipch
+*.exe
+*.dll
+*.obj
+*.pdb
+*.idb
+*.ilk
+*.log
+*.tlog
+*.pch
+*.tmp
+*.cache
+*.db
+*.opendb
+*.user
+*.suo

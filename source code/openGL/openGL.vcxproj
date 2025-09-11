@@ -631,6 +631,7 @@ copy "$(SolutionDir)dependencies\assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)"
     <Image Include="resource\texture\fructos.png" />
     <Image Include="resource\texture\grassblock.png" />
     <Image Include="resource\texture\grassblock_top.png" />
+    <Image Include="resource\texture\house_texture.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

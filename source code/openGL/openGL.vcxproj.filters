@@ -1429,5 +1429,8 @@
     <Image Include="resource\texture\grassblock_top.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resource\texture\house_texture.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -7,9 +7,20 @@
 #include <gtc/matrix_transform.hpp>  
 #include <gtc/type_ptr.hpp>  
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <stdio.h>
+
 #include <string>
+#include <vector>
+#include <functional>
 #include <stdexcept>
 #include <iostream>
+
+#define ENABLE_NORMAL_VSYNC 1
+#define ENABLE_ADAPTIVE_VSYNC -1
+#define DISABLE_VSYNC 0
 
 namespace gl {
 
@@ -69,6 +80,7 @@ namespace gl {
 		float deltaTime;
 		float currentFrame;
 		float lastFrame;
+		int m_Vsync;
 	public:
 		window() = delete;
 
@@ -137,7 +149,7 @@ namespace gl {
 				hideCursor = false;
 			}
 
-			if (!hideCursor && glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+			if (!hideCursor && glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
 				double x = m_CursorX;
 				double y = m_CursorY;
 				glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -150,6 +162,11 @@ namespace gl {
 		}
 
 		void clearColor(RGBA color) {
+			glClearColor(color.r, color.g, color.b, color.a);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		}
+
+		void clearColor(glm::vec4 color) {
 			glClearColor(color.r, color.g, color.b, color.a);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		}
@@ -195,6 +212,13 @@ namespace gl {
 			drawArray(shaderProgram, VAO, mode, first, count);
 		}
 
+		void vsync(int type) { 
+			glfwSwapInterval(type); 
+			m_Vsync = type;
+		}
+
+		const int vsync() const { return m_Vsync; }
+
 		int getKeyPress(int key) { return glfwGetKey(m_Window, key) == GLFW_PRESS; }
 
 		int getKeyHold(int key) { return glfwGetKey(m_Window, key) == GLFW_REPEAT; }
@@ -202,6 +226,107 @@ namespace gl {
 		int getKeyRelease(int key) { return glfwGetKey(m_Window, key) == GLFW_RELEASE; }
 
 		bool operator!() { return !ifinit; }
+	};
+
+	struct UIElement {
+		int type;
+		std::string label;
+		void* data;
+		float minVal, maxVal;
+	};
+
+	class imgui {
+	private:
+		GLFWwindow* m_Window;
+		const char* m_Title;
+		ImGuiIO* m_IO;
+
+		enum ElementType {
+			TEXT = 0,
+			CHECKBOX,
+			SLIDER_FLOAT,
+			SLIDER_INT,
+			BUTTON,
+			INPUT_TEXT
+		};
+
+		std::vector<UIElement> m_Elements;
+	public:
+		imgui(GLFWwindow* window, const char* title)
+			: m_Window(window), m_Title(title)
+		{
+			IMGUI_CHECKVERSION();
+			ImGui::CreateContext();
+			m_IO = &ImGui::GetIO();
+			ImGui::StyleColorsDark();
+			ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
+			ImGui_ImplOpenGL3_Init("#version 130");
+		}
+
+		void addText(const std::string& text) {
+			m_Elements.push_back({ TEXT, text, nullptr, 0.0f, 0.0f });
+		}
+
+		void clearElements() {
+			m_Elements.clear();
+		}
+
+		void addCheckbox(const std::string& label, bool* value) {
+			m_Elements.push_back({ CHECKBOX, label, value, 0.0f, 0.0f });
+		}
+
+		void addSliderFloat(const std::string& label, float* value, float min, float max) {
+			m_Elements.push_back({ SLIDER_FLOAT, label, value, min, max });
+		}
+
+		void addSliderInt(const std::string& label, int* value, int min, int max) {
+			m_Elements.push_back({ SLIDER_INT, label, value, (float)min, (float)max });
+		}
+
+		void setFont(float size) { m_IO->FontGlobalScale = size; }
+
+		void setWindowSize(unsigned x, unsigned y) { ImGui::SetNextWindowSize(ImVec2(x, y)); }
+
+		void render() {
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+
+			ImGui::Begin(m_Title);
+
+			for (UIElement& e : m_Elements) {
+				switch (e.type) {
+				case TEXT:
+					ImGui::Text("%s", e.label.c_str());
+					break;
+				case CHECKBOX:
+					ImGui::Checkbox(e.label.c_str(), (bool*)e.data);
+					break;
+				case SLIDER_FLOAT:
+					ImGui::SliderFloat(e.label.c_str(), (float*)e.data, e.minVal, e.maxVal);
+					break;
+				case SLIDER_INT:
+					ImGui::SliderInt(e.label.c_str(), (int*)e.data, (int)e.minVal, (int)e.maxVal);
+					break;
+				case BUTTON:
+					if (ImGui::Button(e.label.c_str())) {
+						// TODO: store callback
+					}
+					break;
+				}
+			}
+
+			ImGui::End();
+
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		}
+
+		~imgui() {
+			ImGui_ImplOpenGL3_Shutdown();
+			ImGui_ImplGlfw_Shutdown();
+			ImGui::DestroyContext();
+		}
 	};
 
 }

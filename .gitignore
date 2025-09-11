@@ -1,6 +1,4 @@
 # Build outputs
-*.exe
-*.obj
 *.o
 *.pdb
 *.ilk

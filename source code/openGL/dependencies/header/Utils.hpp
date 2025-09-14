@@ -155,7 +155,6 @@ namespace gl {
                 throw std::runtime_error("Failed to load texture: " + path + "\n");
                 return;
             }
-
             glGenTextures(1, &m_Texture);
             glBindTexture(GL_TEXTURE_2D, m_Texture);
 
@@ -220,27 +219,54 @@ namespace gl {
 
     class texture2DArray {
     private:
-        GLuint m_Texture;
-        int m_Width, m_Height, m_Layers;
+        GLuint m_Texture = 0;
+        int m_Width = 0;
+        int m_Height = 0;
+        int m_Layers = 0;
+
     public:
-        texture2DArray(const std::vector<texture2D*>& textures) {
-            if (textures.empty()) throw std::runtime_error("No textures provided for array");
+        // Load multiple same-size images into a GL_TEXTURE_2D_ARRAY
+        texture2DArray(const std::vector<std::string>& paths) {
+            if (paths.empty()) throw std::runtime_error("No textures provided");
 
-            m_Layers = static_cast<int>(textures.size());
+            m_Layers = static_cast<int>(paths.size());
+            stbi_set_flip_vertically_on_load(true);
 
+            // Load first image to determine width, height, and format
+            int nrChannels;
+            unsigned char* data = stbi_load(paths[0].c_str(), &m_Width, &m_Height, &nrChannels, 0);
+            if (!data) throw std::runtime_error("Failed to load texture: " + paths[0]);
+
+            GLenum format = (nrChannels == 4) ? GL_RGBA :
+                (nrChannels == 3) ? GL_RGB :
+                GL_RED;
+
+            // Generate texture
             glGenTextures(1, &m_Texture);
             glBindTexture(GL_TEXTURE_2D_ARRAY, m_Texture);
 
-            // Allocate empty array storage
-            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, m_Width, m_Height, m_Layers, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            // Allocate storage for the array
+            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, format, m_Width, m_Height, m_Layers, 0, format, GL_UNSIGNED_BYTE, nullptr);
 
-            // Upload each layer
-            for (int i = 0; i < m_Layers; ++i) {
-                unsigned char* data = textures[i]->getData(); // you need a getter for raw pixels
-                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, m_Width, m_Height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            // Upload first layer
+            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, m_Width, m_Height, 1, format, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+
+            // Upload remaining layers
+            for (int i = 1; i < m_Layers; ++i) {
+                int w, h, c;
+                unsigned char* d = stbi_load(paths[i].c_str(), &w, &h, &c, 0);
+                if (!d) throw std::runtime_error("Failed to load texture: " + paths[i]);
+                if (w != m_Width || h != m_Height)
+                {
+                    stbi_image_free(d);
+                    throw std::runtime_error("All textures must have the same size: " + paths[i]);
+                }
+                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, m_Width, m_Height, 1, format, GL_UNSIGNED_BYTE, d);
+                stbi_image_free(d);
             }
 
-            // Filtering / wrapping
+            // Texture parameters
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -254,9 +280,14 @@ namespace gl {
             glBindTexture(GL_TEXTURE_2D_ARRAY, m_Texture);
         }
 
-        ~texture2DArray() { glDeleteTextures(1, &m_Texture); }
-
+        GLuint id() const { return m_Texture; }
+        int width() const { return m_Width; }
+        int height() const { return m_Height; }
         int layers() const { return m_Layers; }
+
+        ~texture2DArray() {
+            if (m_Texture) glDeleteTextures(1, &m_Texture);
+        }
     };
 
     class texture3D {
@@ -467,19 +498,42 @@ namespace gl {
         float Pitch;
         float MouseSensitivity;
 
-        float lastX;
-        float lastY;
+        double lastY;
+        double lastX;
+
+        float speed;
     public:
         camera(glm::vec3 position, glm::vec3 target, glm::vec3 upVector)
             : m_Position(position), m_Target(target), m_UpVector(upVector),
             Position(position), Front(glm::normalize(target - position)), Up(upVector),
-            velocity(0.0f), Yaw(-90.0f), Pitch(0.0f), MouseSensitivity(0.03f), 
-            lastX(0.0f), lastY(0.0f)
+            velocity(0.0f), Yaw(-90.0f), Pitch(0.0f), MouseSensitivity(0.03f),
+            lastY(0.0f), lastX(0.0f), speed(20.0f)
         {
         }
 
-        void processKeyboard(gl::window& window) {
-            float deltaTime = window.getKeyPress(GLFW_KEY_LEFT_CONTROL) ? 50.0f * window.getDeltaTime() : 30.0f * window.getDeltaTime();
+        void processInput(gl::window& window) {
+            double thisY = 0 - window.getCursorY();
+            double thisX = window.getCursorX();
+            Yaw += MouseSensitivity * (thisX - window.getLastCursorX());
+            Pitch += MouseSensitivity * (thisY - window.getLastCursorY());
+
+            window.setLastCursorX(thisX);
+            window.setLastCursorY(thisY);
+
+            if (Pitch > 89.99f) Pitch = 89.99f;
+            if (Pitch < -89.99f) Pitch = -89.99f;
+
+            glm::vec3 front;
+            front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+            front.y = sin(glm::radians(Pitch));
+            front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+            Front = glm::normalize(front);
+
+            speed += window.getScrollY() * (window.getKeyPress(GLFW_KEY_LEFT_CONTROL) ? 0.9f : 0.3f);
+            window.resetScrollY();
+            if (speed > 50) speed = 50;
+            else if (speed < 0.0f) speed = 0.0f;
+            float deltaTime = speed * window.getDeltaTime();
 
             // Flattened forward vector (ignores Y)
             glm::vec3 forward = glm::normalize(glm::vec3(Front.x, 0.0f, Front.z));
@@ -513,23 +567,6 @@ namespace gl {
             }
         }
 
-        void processCursor(float thisX, float thisY) {
-            thisY = 0 - thisY;
-            Yaw += MouseSensitivity * (thisX - lastX);
-            Pitch += MouseSensitivity * (thisY - lastY);
-            lastX = thisX;
-            lastY = thisY;
-
-            if (Pitch > 89.99f) Pitch = 89.99f;
-            if (Pitch < -89.99f) Pitch = -89.99f;
-
-            glm::vec3 front;
-            front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-            front.y = sin(glm::radians(Pitch));
-            front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-            Front = glm::normalize(front);
-        }
-
         const glm::mat4 getViewMatrix() const { return glm::lookAt(Position, Position + Front, Up); }
 
         void setPos(glm::vec3 value) { m_Position = value; }
@@ -545,6 +582,8 @@ namespace gl {
         const glm::vec3 getTarget() const { return m_Target; }
 
         const glm::vec3 getUpVector() const { return m_UpVector; }
+
+        const glm::vec3 getDirection() const { return Front; }
     };
 
     //template <class T>

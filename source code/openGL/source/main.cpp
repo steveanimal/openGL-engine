@@ -1,6 +1,6 @@
+#include <Game.hpp>
 #include <window.hpp>
 #include <Utils.hpp>
-#include <Game.hpp>
 #include <Mesh.hpp>
 
 #include <iostream>
@@ -10,30 +10,22 @@ int main() {
     if (!glfwInit()) return -1;
 
     gl::window window(1920, 1080, "window");
-    window.vsync(ENABLE_ADAPTIVE_VSYNC);
-
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (!window) throw std::runtime_error("error init window");
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+
+    window.vsync(ENABLE_ADAPTIVE_VSYNC);    
 
     if (glewInit() != GLEW_OK) return -1;
-
-    gl::imgui ui(window.getWindow(), "debug");
-
-    ui.setFont(3.0f);
-    ui.setWindowSize(250, 300);
 
     gl::shader shader("resource/shader/vert.glsl", "resource/shader/frag.glsl");
 
     shader.useProgram();
 
-    //"resource/texture/grassblock_top.png",
-    //"resource/texture/dirtblock.png",
-    //"resource/texture/grassblock.png",
-
-    gl::object house_model("resource/model/house.obj", "resource/texture/house_texture.png");
+    gl::object awp("resource/model/awp.glb");
+    gl::object model("resource/model/player.glb");
 
     gl::player player(gl::camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)), shader);
 
@@ -53,18 +45,21 @@ int main() {
         player.update(window, shader);
 
         // Draw cube
-        house_model.draw(shader.getProgram(), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec2(0.0f), glm::vec3(0.1f));
+
+        model.draw(shader.getProgram(), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(0.0f));
+
+        glm::vec3 pos = getWeaponOffset(player.getCam());
+        glm::quat rot = getWeaponRotation(player.getCam());
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), pos) * glm::toMat4(rot);
+        model = glm::scale(model, glm::vec3(1.0f));
+
+        awp.draw(shader.getProgram(), model);
+
+        std::cout << player.getPos().x << std::endl;
 
         fps = window.getFps();
         avgFps = (avgFps + fps) / 2;
         if (fps > maxFps) maxFps = fps;
-
-        ui.clearText();
-        ui.addText(std::string("    fps: ") + std::to_string(fps));
-        ui.addText(std::string("avg fps: ") + std::to_string(avgFps));
-        ui.addText(std::string("max fps: ") + std::to_string(maxFps));
-
-        ui.render();
 
         window.swapBuffers();
     }
@@ -74,5 +69,5 @@ int main() {
     std::cout << "avg fps: " << avgFps <<
                "\nmax fps: " << maxFps << std::endl;
 
-    system("pause");
+    //system("pause");
 }

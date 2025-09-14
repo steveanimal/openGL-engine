@@ -24,6 +24,8 @@
 
 namespace gl {
 
+	class camera;
+
 	class window {
 	private:
 		struct RGBA {
@@ -54,12 +56,19 @@ namespace gl {
 			glViewport(0, 0, width, height);
 		}
 
-		static void mouse_callback(GLFWwindow* glfwWindow, double xpos, double ypos) {
+		static void mouse_pos_callback(GLFWwindow* window, double xpos, double ypos) {
 			// Get the instance of your window class
-			gl::window* self = static_cast<gl::window*>(glfwGetWindowUserPointer(glfwWindow));
+			gl::window* self = static_cast<gl::window*>(glfwGetWindowUserPointer(window));
 
 			// Forward the data to your instance method
 			self->onMouseMove(xpos, ypos);
+		}
+
+		static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+			// Get the instance of your window class
+			gl::window* self = static_cast<gl::window*>(glfwGetWindowUserPointer(window));
+
+			// Forward the data to your instance method
 		}
 
 		static void window_focus_callback(GLFWwindow* window, int focused) {
@@ -67,6 +76,15 @@ namespace gl {
 
 			self->hideCursor = focused;
 		}
+
+		static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+			// xoffset → horizontal scroll (usually 0)
+			// yoffset → vertical scroll (positive = scroll up, negative = scroll down)
+			gl::window* self = static_cast<gl::window*>(glfwGetWindowUserPointer(window));
+			self->scrollX = xoffset;
+			self->scrollY = yoffset;
+		}
+
 
 	private:
 		GLFWwindow* m_Window;
@@ -76,11 +94,17 @@ namespace gl {
 		GLuint m_Shader;
 		double m_TargetAspect;
 		double m_CursorX, m_CursorY;
+		double m_LastCursorX, m_LastCursorY;
 		bool hideCursor;
 		float deltaTime;
 		float currentFrame;
 		float lastFrame;
 		int m_Vsync;
+		double scrollX;
+		double scrollY;
+		int mouseButton;
+		int mouseAction;
+		int mode;
 	public:
 		window() = delete;
 
@@ -88,6 +112,8 @@ namespace gl {
 			: m_Width(width),m_Height(height), ifinit(true), lastFrame((float)glfwGetTime())
 		{
 			glEnable(GL_DEPTH_TEST);
+			glDepthMask(GL_TRUE);
+			glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -103,6 +129,9 @@ namespace gl {
 
 			glfwSetFramebufferSizeCallback(m_Window, framebuffer_size_callback);
 			glfwSetWindowFocusCallback(m_Window, window_focus_callback);
+			glfwSetScrollCallback(m_Window, scroll_callback);
+			glfwSetMouseButtonCallback(m_Window, mouse_button_callback);
+			glfwSetCursorPosCallback(m_Window, nullptr);
 
 			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			
@@ -112,6 +141,12 @@ namespace gl {
 		~window() {
 			glfwDestroyWindow(m_Window);
 		}
+
+		inline const int getCursorButton() const { return mouseButton; }
+
+		inline const int getCursorAction() const { return mouseAction; }
+
+		inline const int getCursorMode() const { return mode; }
 
 		inline const int getWidth() const { return m_Width; }
 
@@ -128,6 +163,22 @@ namespace gl {
 		inline const double getCursorX() const { return m_CursorX; }
 
 		inline const double getCursorY() const { return m_CursorY; }
+
+		inline const double getLastCursorX() const { return m_LastCursorX; }
+
+		inline const double getLastCursorY() const { return m_LastCursorY; }
+
+		inline void setLastCursorX(double other) { m_LastCursorX = other; }
+
+		inline void setLastCursorY(double other) { m_LastCursorY = other; }
+
+		inline const double getScrollX() const { return scrollX; }
+
+		inline const double getScrollY() const { return scrollY; }
+
+		inline void resetScrollX() { scrollX = 0.0f; }
+
+		inline void resetScrollY() { scrollY = 0.0f; }
 
 		inline const bool ifHideCursor() const { return hideCursor; }
 
@@ -146,15 +197,14 @@ namespace gl {
 			if (hideCursor && glfwGetKey(m_Window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 				glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				glfwSetCursorPosCallback(m_Window, nullptr);
+				glfwSetCursorPos(m_Window, (float)m_Width / (float)2, (float)m_Height / (float)2);
 				hideCursor = false;
 			}
 
-			if (!hideCursor && glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-				double x = m_CursorX;
-				double y = m_CursorY;
+			if (!hideCursor && glfwGetMouseButton(m_Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+				glfwSetCursorPos(m_Window, m_CursorX, m_CursorY);
 				glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-				glfwSetCursorPosCallback(m_Window, mouse_callback);
-				glfwSetCursorPos(m_Window, x, y);
+				glfwSetCursorPosCallback(m_Window, mouse_pos_callback);
 				hideCursor = true;
 			}
 			
@@ -260,7 +310,7 @@ namespace gl {
 			m_IO = &ImGui::GetIO();
 			ImGui::StyleColorsDark();
 			ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
-			ImGui_ImplOpenGL3_Init("#version 130");
+			ImGui_ImplOpenGL3_Init("#version 330");
 		}
 
 		void addText(const std::string& text) {

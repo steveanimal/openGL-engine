@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -450,6 +450,7 @@ copy "$(SolutionDir)dependencies\assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)"
     <ClInclude Include="dependencies\header\Entity.hpp" />
     <ClInclude Include="dependencies\header\Game.hpp" />
     <ClInclude Include="dependencies\header\Mesh.hpp" />
+    <ClInclude Include="dependencies\header\Texture.hpp" />
     <ClInclude Include="dependencies\header\Utils.hpp" />
     <ClInclude Include="dependencies\header\Window.hpp" />
     <ClInclude Include="dependencies\imgui\imconfig.h" />

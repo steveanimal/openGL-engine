@@ -109,7 +109,7 @@ namespace gl {
 		window() = delete;
 
 		window(int width, int height, const char* name, GLFWmonitor* monitor = nullptr, GLFWwindow* share = nullptr) 
-			: m_Width(width),m_Height(height), ifinit(true), lastFrame((float)glfwGetTime())
+			: m_Width(width),m_Height(height), ifinit(true), hideCursor(true), lastFrame((float)glfwGetTime())
 		{
 			glEnable(GL_DEPTH_TEST);
 			glDepthMask(GL_TRUE);
@@ -131,9 +131,9 @@ namespace gl {
 			glfwSetWindowFocusCallback(m_Window, window_focus_callback);
 			glfwSetScrollCallback(m_Window, scroll_callback);
 			glfwSetMouseButtonCallback(m_Window, mouse_button_callback);
-			glfwSetCursorPosCallback(m_Window, nullptr);
+			glfwSetCursorPosCallback(m_Window, mouse_pos_callback);
 
-			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			
 			glfwMakeContextCurrent(m_Window);
 		}

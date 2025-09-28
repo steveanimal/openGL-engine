@@ -5,11 +5,11 @@ in vec2 TexCoords;
 in vec3 FragPos;
 in mat3 TBN;
 
-uniform sampler2D baseColor0;
-uniform sampler2D normal0;
-uniform sampler2D metallicRoughness0;
-uniform sampler2D occlusion0;
-uniform sampler2D emissive0;
+uniform sampler2D baseColor;
+uniform sampler2D normal;
+uniform sampler2D metallicRoughness;
+uniform sampler2D occlusion;
+uniform sampler2D emissive;
 
 uniform vec3 camPos;
 
@@ -21,25 +21,24 @@ uniform vec3 lightColor[MAX_LIGHTS];
 // Get normal from normal map using TBN
 vec3 getNormalFromMap()
 {
-    vec3 tangentNormal = texture(normal0, TexCoords).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = texture(normal, TexCoords).xyz * 2.0 - 1.0;
     return normalize(TBN * tangentNormal);
 }
 
 void main()
 {
-    vec3 albedo = pow(texture(baseColor0, TexCoords).rgb, vec3(2.2));
-    float metallic  = texture(metallicRoughness0, TexCoords).b;
-    float roughness = texture(metallicRoughness0, TexCoords).g;
-    float ao        = texture(occlusion0, TexCoords).r;
-    vec3 emissive   = texture(emissive0, TexCoords).rgb;
+    vec3 albedo = pow(texture(baseColor, TexCoords).rgb, vec3(2.2));
+    float metallic  = texture(metallicRoughness, TexCoords).b;
+    float roughness = texture(metallicRoughness, TexCoords).g;
+    float ao        = texture(occlusion, TexCoords).r;
+    vec3 emissive   = texture(emissive, TexCoords).rgb;
 
     vec3 N = getNormalFromMap();
     vec3 V = normalize(camPos - FragPos);
 
     vec3 Lo = vec3(0.0);
 
-    for (int i = 0; i < numLights; i++)
-    {
+    for (int i = 0; i < numLights; i++) {
         vec3 L = normalize(lightPos[i] - FragPos);
         vec3 H = normalize(V + L);
 
@@ -68,6 +67,6 @@ void main()
     vec3 color = ambient + Lo + emissive;
     color = pow(color, vec3(1.0/2.2));
 
-    float alpha = texture(baseColor0, TexCoords).a;
+    float alpha = texture(baseColor, TexCoords).a;
     FragColor = vec4(color, alpha);
 }

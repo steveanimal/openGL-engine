@@ -49,6 +49,7 @@ namespace gl {
 
 		void update(gl::window& window, gl::shader shader) {
 			shader.useProgram();
+
 			m_Camera.processInput(window);
 
 			m_View = m_Camera.getViewMatrix();
@@ -71,55 +72,14 @@ namespace gl {
 
 		glm::vec3 getPos() const { return m_Camera.getPos(); }
 
-		glm::vec3 getPosRadians() const { return m_Camera.getDirection(); }
+		glm::vec3 getDirRadians() const { return m_Camera.getDirection(); }
 	};
 
-	static const glm::vec3 kHoldOffset(0.35f, -0.25f, 0.6f);   // right, down, forward
-	static const glm::vec3 kHoldRotation(-10.0f, 10.0f, 0.0f); // pitch, yaw, roll
-
-	// ----------------------------
-	// Returns weapon world position
-	glm::vec3 getWeaponOffset(const gl::camera& cam)
-	{
-		// Base offsets in camera space
-		glm::vec3 rightOffset(0.3f, -0.25f, -0.5f); // right, down, forward
-		// right: positive x, down: negative y, forward: negative z
-
-		// Camera axes
-		glm::vec3 camRight = glm::normalize(glm::cross(cam.getDirection(), cam.getUpVector()));
-		glm::vec3 camUp = glm::normalize(cam.getUpVector());
-		glm::vec3 camForward = glm::normalize(cam.getDirection());
-
-		// Transform offset to world space
-		glm::vec3 worldOffset =
-			camRight * rightOffset.x +
-			camUp * rightOffset.y +
-			camForward * rightOffset.z;
-
-		return cam.getPos() + worldOffset;
+	glm::vec3 getItemOffset(const camera& cam, const glm::vec3& offset = glm::vec3(0.15f, -0.35f, 0.15f)) {
+		return cam.getPos() + (offset + glm::vec3());
 	}
 
-	glm::quat getWeaponRotation(const gl::camera& cam)
-	{
-		glm::vec3 handTilt(10.0f, 0.0f, 0.0f); // pitch, yaw, roll in degrees
-
-		glm::vec3 camDir = cam.getDirection();
-		glm::vec3 camUp = cam.getUpVector();
-
-		// Prevent degenerate lookAt when looking straight up/down
-		if (glm::abs(glm::dot(glm::normalize(camDir), glm::normalize(camUp))) > 0.999f)
-		{
-			// almost parallel, choose a fixed up (world up)
-			camUp = glm::vec3(0, 1, 0);
-			if (glm::dot(glm::normalize(camDir), camUp) > 0.999f)
-				camUp = glm::vec3(0, 0, -1); // fallback if looking straight up
-		}
-
-		glm::quat camRot = glm::quatLookAt(glm::normalize(camDir), glm::normalize(camUp));
-		glm::quat tilt = glm::quat(glm::radians(handTilt));
-
-		return camRot * tilt;
+	glm::vec3 getItemRotation(const camera& cam) {
+		return glm::vec3(0.0f);
 	}
-
-
 }

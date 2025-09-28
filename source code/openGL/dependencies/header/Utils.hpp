@@ -484,15 +484,13 @@ namespace gl {
 
     class camera {
     private:
-        glm::vec3 m_Position;
         glm::vec3 m_Target;
         glm::vec3 m_UpVector;
 
         glm::vec3 Position;
         glm::vec3 Front;
+        glm::vec3 Right;
         glm::vec3 Up;
-
-        float velocity;
 
         float Yaw;
         float Pitch;
@@ -501,75 +499,62 @@ namespace gl {
         double lastY;
         double lastX;
 
-        float speed;
+        glm::vec3 speed;
+        glm::vec3 velocity;
     public:
+
         camera(glm::vec3 position, glm::vec3 target, glm::vec3 upVector)
-            : m_Position(position), m_Target(target), m_UpVector(upVector),
-            Position(position), Front(glm::normalize(target - position)), Up(upVector),
-            velocity(0.0f), Yaw(-90.0f), Pitch(0.0f), MouseSensitivity(0.03f),
+            : m_Target(target), m_UpVector(upVector),
+            Position(position), Front(glm::normalize(target - position)), Right(0.0f), Up(upVector),
+            velocity(glm::vec3(0.0f)), Yaw(-90.0f), Pitch(0.0f), MouseSensitivity(0.03f),
             lastY(0.0f), lastX(0.0f), speed(20.0f)
         {
         }
 
         void processInput(gl::window& window) {
-            double thisY = 0 - window.getCursorY();
+            // --- MOUSE LOOK ---
+            double thisY = window.getCursorY();
             double thisX = window.getCursorX();
+
             Yaw += MouseSensitivity * (thisX - window.getLastCursorX());
-            Pitch += MouseSensitivity * (thisY - window.getLastCursorY());
+            Pitch += MouseSensitivity * (window.getLastCursorY() - thisY);
 
             window.setLastCursorX(thisX);
             window.setLastCursorY(thisY);
 
+            // Clamp Pitch
             if (Pitch > 89.99f) Pitch = 89.99f;
             if (Pitch < -89.99f) Pitch = -89.99f;
 
+            // Wrap Yaw
+            Yaw = std::fmod(Yaw + 180.0f, 360.0f) - 180.0f;
+
+            // --- UPDATE FRONT VECTOR ---
             glm::vec3 front;
             front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
             front.y = sin(glm::radians(Pitch));
             front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
             Front = glm::normalize(front);
 
-            speed += window.getScrollY() * (window.getKeyPress(GLFW_KEY_LEFT_CONTROL) ? 0.9f : 0.3f);
-            window.resetScrollY();
-            if (speed > 50) speed = 50;
-            else if (speed < 0.0f) speed = 0.0f;
-            float deltaTime = speed * window.getDeltaTime();
+            float dt = window.getDeltaTime();
 
-            // Flattened forward vector (ignores Y)
+            // --- INPUT DIRECTION ---
             glm::vec3 forward = glm::normalize(glm::vec3(Front.x, 0.0f, Front.z));
+            glm::vec3 right = glm::normalize(glm::cross(Front, Up));
 
-            if (window.getKeyPress(GLFW_KEY_W)) {
-                Position += forward * deltaTime;
-            }
-
-            if (window.getKeyPress(GLFW_KEY_S)) {
-                Position -= forward * deltaTime;
-            }
-
-            // Right vector stays the same
-            glm::vec3 Right = glm::normalize(glm::cross(Front, Up));
-
-            if (window.getKeyPress(GLFW_KEY_D)) {
-                Position += Right * deltaTime;
-            }
-
-            if (window.getKeyPress(GLFW_KEY_A)) {
-                Position -= Right * deltaTime;
-            }
-
-            // Up/Down movement still uses Y axis
-            if (window.getKeyPress(GLFW_KEY_SPACE)) {
-                Position += Up * deltaTime;
-            }
-
-            if (window.getKeyPress(GLFW_KEY_LEFT_SHIFT)) {
-                Position -= Up * deltaTime;
-            }
+            if (window.getKeyPress(GLFW_KEY_W)) velocity += forward;
+            if (window.getKeyPress(GLFW_KEY_S)) velocity -= forward;
+            if (window.getKeyPress(GLFW_KEY_D)) velocity += right;
+            if (window.getKeyPress(GLFW_KEY_A)) velocity -= right;
+            if (window.getKeyPress(GLFW_KEY_SPACE)) velocity += Up;
+            if (window.getKeyPress(GLFW_KEY_LEFT_SHIFT)) velocity -= Up;
+            static float friction = 0.85f;
+            if (window.getKeyPress(GLFW_KEY_C)) velocity *= friction * 0.8f;
+            else velocity *= friction;
+            Position += velocity * dt * glm::vec3(2.7f);
         }
 
         const glm::mat4 getViewMatrix() const { return glm::lookAt(Position, Position + Front, Up); }
-
-        void setPos(glm::vec3 value) { m_Position = value; }
 
         void setSens(float sens) { MouseSensitivity = sens; }
 
@@ -577,11 +562,17 @@ namespace gl {
 
         void setUpVector(glm::vec3 upVector) { m_UpVector = upVector; }
 
+        const float getYaw() const { return Yaw; }
+
+        const float getPitch() const { return Pitch; }
+
         const glm::vec3 getPos() const { return Position; }
 
         const glm::vec3 getTarget() const { return m_Target; }
 
         const glm::vec3 getUpVector() const { return m_UpVector; }
+
+        const glm::vec3 getRight() const { return Right; }
 
         const glm::vec3 getDirection() const { return Front; }
     };

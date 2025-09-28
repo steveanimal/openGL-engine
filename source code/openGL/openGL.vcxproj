@@ -149,7 +149,13 @@ copy "$(SolutionDir)dependencies\assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)"
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)dependencies\GLFW\bin\glfw3.dll" "$(OutDir)";
 copy "$(SolutionDir)dependencies\GLEW\bin\glew32.dll" "$(OutDir)";
-copy "$(SolutionDir)dependencies\assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)"</Command>
+copy "$(SolutionDir)dependencies\assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)";
+
+copy "$(SolutionDir)dependencies\GLFW\bin\glfw3.dll" "C:\programming\openGL-engine\example";
+copy "$(SolutionDir)dependencies\GLEW\bin\glew32.dll" "C:\programming\openGL-engine\example";
+copy "$(SolutionDir)dependencies\assimp\bin\x64\assimp-vc143-mt.dll" "C:\programming\openGL-engine\example";
+
+copy "$(OutDir)openGL.exe" "C:\programming\openGL-engine\example";</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

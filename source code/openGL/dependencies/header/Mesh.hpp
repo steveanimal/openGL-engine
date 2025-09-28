@@ -195,64 +195,21 @@ namespace gl {
             textures[index].text = tex;
         }
 
-        void drawHUD(GLuint shaderProgram, const gl::window& window, float scale = 100.0f) {
-            glUseProgram(shaderProgram);
-
-            int screenWidth = window.getWidth();
-            int screenHeight = window.getHeight();
-
-            // Orthographic projection (0,0 bottom-left)
-            glm::mat4 projection = glm::ortho(0.0f, (float)screenWidth, 0.0f, (float)screenHeight);
-            glm::mat4 view = glm::mat4(1.0f); // no camera transform
-            glm::mat4 model(1.0f);
-
-            // Place at bottom-right corner
-            model = glm::translate(model, glm::vec3(screenWidth - scale * 1.2f, scale * 0.2f, 0.0f));
-
-            // Optional rotation
-            model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(0, 1, 0));
-
-            // Scale down to fit HUD
-            model = glm::scale(model, glm::vec3(scale));
-
-            // Upload matrices
-            GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
-            GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
-            GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
-
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-            glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-            // Draw the mesh
-            glBindVertexArray(VAO);
-            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
-            glBindVertexArray(0);
-        }
-
-
         // In gl::object
         void draw(GLuint shaderProgram,
             const glm::vec3& pos,
             const glm::vec3& scale,
-            const glm::vec3& rotation,
-            const glm::mat4* overrideModel = nullptr) // new optional param
+            const glm::vec3& rotation) // new optional param
         {
             glUseProgram(shaderProgram);
 
             glm::mat4 model(1.0f);
-
-            if (overrideModel) {
-                model = *overrideModel; // use the provided model matrix
-            }
-            else {
                 // --- build model matrix as before ---
-                model = glm::translate(model, pos);
-                model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
-                model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
-                model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
-                model = glm::scale(model, scale);
-            }
+            model = glm::translate(model, pos);
+            model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+            model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+            model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+            model = glm::scale(model, scale);
 
             GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -262,7 +219,7 @@ namespace gl {
                 glActiveTexture(GL_TEXTURE0 + i);
                 if (i < textures.size() && textures[i].text) {
                     textures[i].text->bind(GL_TEXTURE_2D);
-                    std::string uniformName = textures[i].name + "0";
+                    std::string uniformName = textures[i].name;
                     GLint loc = glGetUniformLocation(shaderProgram, uniformName.c_str());
                     if (loc >= 0) glUniform1i(loc, i);
                 }
@@ -279,8 +236,7 @@ namespace gl {
         }
 
 
-        void draw(GLuint shaderProgram, const glm::mat4& model)
-        {
+        void draw(GLuint shaderProgram, const glm::mat4& model) {
             glUseProgram(shaderProgram);
 
             // Upload model matrix
@@ -288,24 +244,25 @@ namespace gl {
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
             // Bind textures sequentially
-            for (size_t i = 0; i < textures.size(); ++i)
-            {
+            for (int i = 0; i < MAX_TEXTURE_UNITS; ++i) {
                 glActiveTexture(GL_TEXTURE0 + i);
-                textures[i].text->bind(GL_TEXTURE_2D);
-                std::string uniformName = "texture" + std::to_string(i);
-                GLint loc = glGetUniformLocation(shaderProgram, uniformName.c_str());
-                if (loc >= 0) glUniform1i(loc, static_cast<GLint>(i));
+                if (i < textures.size() && textures[i].text) {
+                    textures[i].text->bind(GL_TEXTURE_2D);
+                    std::string uniformName = textures[i].name;
+                    GLint loc = glGetUniformLocation(shaderProgram, uniformName.c_str());
+                    if (loc >= 0) glUniform1i(loc, i);
+                }
+                else glBindTexture(GL_TEXTURE_2D, 0);
             }
 
-            // Draw mesh
+            uploadLights(shaderProgram);
+
             glBindVertexArray(VAO);
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
 
-            // Reset active texture
             glActiveTexture(GL_TEXTURE0);
         }
-
 
     private:
         inline std::filesystem::path getPath(const std::string& relativePath) {

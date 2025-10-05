@@ -23,12 +23,12 @@ namespace gl {
 		gl::uniform m_View;
 		gl::uniform m_Proj;
 	public:
-		player(gl::camera cam, GLuint shader) 
+		player(gl::camera cam) 
 			: m_Camera(cam), m_Velocity(glm::vec3(0.0f))
 		{
-			m_Model = gl::uniform(glm::mat4(1.0f), glGetUniformLocation(shader, "model"));
-			m_View = gl::uniform(glm::mat4(1.0f), glGetUniformLocation(shader, "view"));
-			m_Proj = gl::uniform(glm::mat4(1.0f), glGetUniformLocation(shader, "projection"));
+			m_Model = gl::uniform(glm::mat4(1.0f), glGetUniformLocation(m_Camera.getShader(), "model"));
+			m_View = gl::uniform(glm::mat4(1.0f), glGetUniformLocation(m_Camera.getShader(), "view"));
+			m_Proj = gl::uniform(glm::mat4(1.0f), glGetUniformLocation(m_Camera.getShader(), "projection"));
 		}
 
 		player(gl::camera cam, gl::shader shader)
@@ -53,12 +53,18 @@ namespace gl {
 			m_Camera.processInput(window);
 
 			m_View = m_Camera.getViewMatrix();
-			m_Proj = glm::perspective(glm::radians(60.0f), (float)window.getWidth() / (float)window.getHeight(), 0.001f, 10000.0f);
+			m_Proj = glm::perspective(glm::radians(m_Camera.getFov()), (float)window.getWidth() / (float)window.getHeight(), 0.001f, 10000.0f);
 
 			m_Model.uniformMatrix4fv();
 			m_View.uniformMatrix4fv();
 			m_Proj.uniformMatrix4fv();
 		}
+
+		void setFov(const float& fov, const float& aspect) { m_Camera.setFov(fov); }
+
+		const float getFov() const { return m_Camera.getFov(); }
+
+		void setSens(const float& other) { m_Camera.setSens(other); }
 
 		void setModel(glm::mat4& other) { m_Model = other; }
 
@@ -72,14 +78,17 @@ namespace gl {
 
 		glm::vec3 getPos() const { return m_Camera.getPos(); }
 
-		glm::vec3 getDirRadians() const { return m_Camera.getDirection(); }
+		glm::vec3 getDirRadians() const { return m_Camera.getFront(); }
 	};
 
-	glm::vec3 getItemOffset(const camera& cam, const glm::vec3& offset = glm::vec3(0.15f, -0.35f, 0.15f)) {
-		return cam.getPos() + (offset + glm::vec3());
-	}
-
-	glm::vec3 getItemRotation(const camera& cam) {
-		return glm::vec3(0.0f);
+	glm::mat4 getItemModel(const camera& cam, const glm::vec3& offset, const glm::vec3& scale) {
+		return glm::scale(
+			glm::translate(
+				glm::translate(glm::mat4(1.0f), cam.getPos()) *
+				glm::inverse(glm::lookAt(glm::vec3(0.0f), -cam.getFront(), cam.getUpVector())),
+				offset
+			),
+			scale
+		);
 	}
 }

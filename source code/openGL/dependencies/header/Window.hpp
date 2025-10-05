@@ -105,6 +105,8 @@ namespace gl {
 		int mouseButton;
 		int mouseAction;
 		int mode;
+
+		friend const void setFov(const float& other);
 	public:
 		window() = delete;
 
@@ -197,7 +199,7 @@ namespace gl {
 			if (hideCursor && glfwGetKey(m_Window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 				glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				glfwSetCursorPosCallback(m_Window, nullptr);
-				glfwSetCursorPos(m_Window, (float)m_Width / (float)2, (float)m_Height / (float)2);
+				glfwSetCursorPos(m_Window, (float)m_Width / 2.0f, (float)m_Height / 2.0f);
 				hideCursor = false;
 			}
 
